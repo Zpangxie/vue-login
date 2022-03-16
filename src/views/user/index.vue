@@ -2,9 +2,9 @@
   <div class="user-page">
     <h1>个人中心</h1>
     <van-cell-group>
-      <van-cell title="姓名" />
-      <van-cell title="年龄" />
-      <van-cell title="手机号" />
+      <van-cell title="姓名" :value="name" />
+      <van-cell title="年龄" :value="age" />
+      <van-cell title="手机号" :value="phone" />
     </van-cell-group>
     <van-button type="primary" size="large" class="big-but" @click="quit"
       >退出登录</van-button
@@ -14,10 +14,17 @@
 
 <script>
 import { Dialog } from "vant";
+import { mapState } from "vuex";
 
 export default {
   name: "UserPage",
-
+  computed: {
+    ...mapState({
+      name: (state) => state.userinfo.name,
+      age: (state) => state.userinfo.age,
+      phone: (state) => state.userinfo.phone,
+    }),
+  },
   methods: {
     quit() {
       Dialog.confirm({

@@ -1,12 +1,10 @@
 <template>
   <div class="login-page">
     <el-card class="card-header">
-      <!-- 标题 -->
       <div slot="header" class="clearfix">
         <span>登录</span>
       </div>
 
-      <!-- 表单 -->
       <div class="card-body">
         <el-form
           :model="formData"
@@ -32,7 +30,6 @@
         </el-form>
       </div>
 
-      <!-- 登录按钮 -->
       <div>
         <el-button
           type="primary"
@@ -50,14 +47,19 @@
         >
       </div>
 
-      <RegisterDialog :visible.sync="registerDialogVisible" />
+      <RegisterDialog
+        :visible.sync="registerDialogVisible"
+        @register-success="onRegisterSuccess"
+      />
     </el-card>
   </div>
 </template>
 
 <script>
+import { loginWithUsernameAndPass } from "../../utils/login";
 import RegisterDialog from "./components/RegisterDialog.vue";
-import loginWithUsernameAndPass from "../../utils/login";
+import { ACTION_MAP } from "@/store";
+
 export default {
   name: "LoginPage",
   components: {
@@ -65,7 +67,8 @@ export default {
   },
   data() {
     return {
-      FormData: {
+      registerDialogVisible: false,
+      formData: {
         username: "",
         password: "",
       },
@@ -76,15 +79,16 @@ export default {
         ],
         password: [{ required: true, message: "请输入密码" }],
       },
+      loginBtnLoading: false,
     };
   },
   methods: {
     onLoginBtnClick() {
       // 进行表单校验
       this.$refs.loginFormRef.validate((isValid) => {
+        // 如果校验成功
         if (isValid) {
           this.loginBtnLoading = true;
-          // 如果校验成功
           loginWithUsernameAndPass({
             username: this.formData.username,
             password: this.formData.password,
@@ -98,9 +102,17 @@ export default {
                   message: "登录成功",
                   type: "success",
                 });
+                const token = res.data.token;
+                const userinfo = res.data.userinfo;
 
+                this.$store.dispatch(ACTION_MAP.updateTokenAndUserinfo, {
+                  token,
+                  userinfo,
+                });
                 this.$router.push({ name: "User" });
-              } else {
+              }
+              // 其他状态码都是登录失败
+              else {
                 this.$notify({
                   title: "登录失败",
                   message: res.data.message,
@@ -108,7 +120,7 @@ export default {
                 });
               }
             })
-
+            // 当网络请求失败时，catch 会被触发
             .catch(() => {
               this.$notify({
                 title: "登录失败",
@@ -120,11 +132,15 @@ export default {
               this.loginBtnLoading = false;
             });
         }
-        // 校验失败
+        // 如果校验失败
         else {
           // do nothing
         }
       });
+    },
+    //注册成功后触发
+    onRegisterSuccess(registerInfo) {
+      Object.assign(this.formData, registerInfo);
     },
   },
 };
